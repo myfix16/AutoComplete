@@ -16,15 +16,69 @@ namespace AutoComplete
 
         private void ThisAddIn_Startup(object sender, EventArgs e)
         {
-            hook = new Hook();
+            // Hook config.
+            hook = new Hook
+            {
+                processAction = AutoCompleteBracket
+            };
+
             hook.InstallHook();
-            hook.OnKeyDown += Hook_OnKeyDown;
         }
 
-        private void Hook_OnKeyDown(object sender, KeyEventArgs e)
+        private void AutoCompleteBracket(Keys keyData)
         {
-            Word.Range rng = Application.ActiveDocument.Range(0, 0);
-            rng.Text = "New Text";
+            if (Hook.IsKeyDown(Keys.ShiftKey) && Hook.IsKeyDown(keyData))
+            {
+                switch (keyData)
+                {
+                    // ( 
+                    case Keys.D9:
+                        InsertText(")");
+                        break;
+                    // {
+                    case Keys.OemOpenBrackets:
+                        InsertText("}");
+                        break;
+                    // "
+                    case Keys.OemQuotes:
+                        InsertText("\"");
+                        break;
+                    // <
+                    case Keys.Oemcomma:
+                        InsertText(">");
+                        break;
+                    default:
+                        break;
+                }
+            }
+            else if (Hook.IsKeyDown(keyData))
+            {
+                // '
+                if (keyData == Keys.OemQuotes) InsertText("'");
+                else if (keyData == Keys.OemOpenBrackets) InsertText("]");
+            }
+        }
+
+        private void InsertText(string anotherHalf)
+        {
+            Word.Selection currentSelection = Application.Selection;
+            // Test to see if selection is an insertion point(usually represented by a blinking vertical line).
+            if (currentSelection.Type == Word.WdSelectionType.wdSelectionIP)
+            {
+                currentSelection.Range.InsertAfter(anotherHalf);
+            }
+            #region Selection Normal
+            //else if (currentSelection.Type == Word.WdSelectionType.wdSelectionNormal)
+            //{
+            //    // Move to start of selection.
+            //    if (Application.Options.ReplaceSelection)
+            //    {
+            //        object direction = Word.WdCollapseDirection.wdCollapseEnd;
+            //        currentSelection.Collapse(ref direction);
+            //    }
+            //    currentSelection.TypeText("Inserting before a text block. ");
+            //}
+            #endregion
         }
 
         private void ThisAddIn_Shutdown(object sender, EventArgs e)
@@ -43,7 +97,7 @@ namespace AutoComplete
             Startup += new System.EventHandler(ThisAddIn_Startup);
             Shutdown += new System.EventHandler(ThisAddIn_Shutdown);
         }
-        
+
         #endregion
     }
 }
