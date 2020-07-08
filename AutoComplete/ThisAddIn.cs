@@ -3,16 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Xml.Linq;
-using Word = Microsoft.Office.Interop.Word;
 using Office = Microsoft.Office.Core;
 using Microsoft.Office.Tools.Word;
 using System.Windows.Forms;
+using Microsoft.Office.Interop.Word;
+using System.Text.RegularExpressions;
 
 namespace AutoComplete
 {
     public partial class ThisAddIn
     {
         Hook hook;
+        readonly Regex endCharjudge = new Regex(@"\.|,|;|:|\s|\)|\]|\}|\>");
 
         private void ThisAddIn_Startup(object sender, EventArgs e)
         {
@@ -53,17 +55,20 @@ namespace AutoComplete
             }
             else if (Hook.IsKeyDown(keyData))
             {
-                // '
-                if (keyData == Keys.OemQuotes) InsertText("'");
-                else if (keyData == Keys.OemOpenBrackets) InsertText("]");
+                /*// '
+                if (keyData == Keys.OemQuotes) InsertText("'");*/
+
+                // [
+                if (keyData == Keys.OemOpenBrackets) InsertText("]");
             }
         }
 
         private void InsertText(string anotherHalf)
         {
-            Word.Selection currentSelection = Application.Selection;
+            Selection currentSelection = Application.Selection;
             // Test to see if selection is an insertion point(usually represented by a blinking vertical line).
-            if (currentSelection.Type == Word.WdSelectionType.wdSelectionIP)
+            if (currentSelection.Type == WdSelectionType.wdSelectionIP
+                && NeedsComplete(ref currentSelection))
             {
                 currentSelection.Range.InsertAfter(anotherHalf);
             }
@@ -79,6 +84,18 @@ namespace AutoComplete
             //    currentSelection.TypeText("Inserting before a text block. ");
             //}
             #endregion
+        }
+
+        /// <summary>
+        /// It will check the character after selectionIP and decide whether to invoke AutoComplete.
+        /// </summary>
+        /// <param name="currentSelection"></param>
+        private bool NeedsComplete(ref Selection currentSelection)
+        {
+            var charAfter = Application.ActiveDocument
+                .Range(currentSelection.Range.End, currentSelection.Range.End + 1)
+                .Text;
+            return endCharjudge.IsMatch(charAfter) || charAfter.Length == 0;
         }
 
         private void ThisAddIn_Shutdown(object sender, EventArgs e)
