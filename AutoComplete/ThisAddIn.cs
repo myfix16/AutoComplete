@@ -1,20 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Xml.Linq;
-using Office = Microsoft.Office.Core;
-using Microsoft.Office.Tools.Word;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using Microsoft.Office.Interop.Word;
-using System.Text.RegularExpressions;
 
 namespace AutoComplete
 {
     public partial class ThisAddIn
     {
         Hook hook;
-        readonly Regex endCharjudge = new Regex(@"\.|,|;|:|\s|\)|\]|\}|\>");
+        readonly Regex endCharjudge = new Regex(@"\.|,|;|:|\s|\)|\]|\}|\>|""");
 
         private void ThisAddIn_Startup(object sender, EventArgs e)
         {
