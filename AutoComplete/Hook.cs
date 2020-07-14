@@ -4,44 +4,53 @@ using System.Windows.Forms;
 namespace AutoComplete
 {
     /// <summary>
-    /// 钩子委托声明
+    /// Hook delegate.
     /// </summary>
     public delegate int HookProc(int nCode, int wParam, IntPtr lParam);
 
-    //public delegate void ProcessAction(Keys keyData);
-    public delegate void ProcessAction();
-
     public class Hook
     {
-        #region 私有变量
+        /// <summary>
+        /// The method triggered when some key is pressed.
+        /// </summary>
+        internal Action processAction = () => { };
 
-        internal ProcessAction processAction = () => { };
-
-        private bool enabled = true;
+        //private bool enabled = true;
 
         /// <summary>
-        /// 键盘钩子句柄
+        /// Keyboard hook handle.
         /// </summary>
         private IntPtr mKeyboardHook = IntPtr.Zero;
+
         /// <summary>
-        /// 键盘钩子委托实例
+        /// Instance of keyboard hook delegate. It will be invoked when some key is pressed.
         /// </summary>
         private HookProc mKeyboardHookProcedure;
 
-        #endregion
-
+        /// <summary>
+        /// Judge whether a key is pressed.
+        /// </summary>
+        /// <param name="keys"></param>
+        /// <returns>Whether a specific key is pressed.</returns>
         internal static bool IsKeyDown(Keys keys) => (Win32API.GetKeyState((int)keys) & 0x8000) == 0x8000;
 
         /// <summary>
-        /// 键盘钩子处理函数
+        /// The processing function of keyboard hook.
         /// </summary>
+        /// <param name="nCode"></param>
+        /// <param name="wParam">
+        ///     Specifies whether the message is sent by the current process. In this case, it's key id.
+        ///     If the message is sent by the current process, it is nonzero; otherwise, it is NULL.
+        /// </param>
+        /// <param name="lParam">
+        ///     A pointer to a CWPRETSTRUCT structure that contains details about the message.
+        /// </param>
         private int KeyboardHookProc(int nCode, int wParam, IntPtr lParam)
         {
             if (nCode == (int)HC_CODE.HC_ACTION)
             {
-                //Keys keyData = (Keys)wParam;
                 processAction();
-
+                #region enable or disable
                 /* if (IsKeyDown(Keys.ShiftKey) && IsKeyDown(Keys.ControlKey) && IsKeyDown(Keys.Menu)
                     && IsKeyDown(keyData) && IsKeyDown(Keys.O))
                 {
@@ -50,23 +59,22 @@ namespace AutoComplete
 
                 if (enabled)
                     processAction(keyData);*/
+                # endregion
             }
 
             return Win32API.CallNextHookEx(mKeyboardHook, nCode, wParam, lParam);
         }
 
         /// <summary>
-        /// 安装钩子
+        /// Install hook. 
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Whether hook is successfully installed.</returns>
         public bool InstallHook()
         {
             if (mKeyboardHook == IntPtr.Zero)
             {
                 mKeyboardHookProcedure = new HookProc(KeyboardHookProc);
-                mKeyboardHook = Win32API.SetWindowsHookEx(WH_CODE.WH_KEYBOARD,
-                                                          mKeyboardHookProcedure,
-                                                          IntPtr.Zero,
+                mKeyboardHook = Win32API.SetWindowsHookEx(WH_CODE.WH_KEYBOARD, mKeyboardHookProcedure, IntPtr.Zero,
                                                           Win32API.GetCurrentThreadId());
             }
 
@@ -74,9 +82,9 @@ namespace AutoComplete
         }
 
         /// <summary>
-        /// 卸载钩子
+        /// Uninstall the hook.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Whether the hook is successfully uninstalled.</returns>
         public bool UnInstallHook()
         {
             bool result = true;

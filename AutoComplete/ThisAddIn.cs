@@ -8,10 +8,11 @@ namespace AutoComplete
     public partial class ThisAddIn
     {
         Hook hook;
+        bool busy = false;
         // "" means ".
         readonly Regex canCompletePairs = new Regex(@"\.|,|;|:|\s|\)|\]|\}|\>|""");
         // Pattern used when user presses Backspace.
-        readonly Regex canDelPairs = new Regex(@"<>|\[\]|\(\)|\{\}|[""]+");
+        readonly Regex canDelPairs = new Regex(@"<>|\[\]|\(\)|{}");
 
         private void ThisAddIn_Startup(object sender, EventArgs e)
         {
@@ -26,9 +27,18 @@ namespace AutoComplete
 
         private void AutoProcessPairs()
         {
-            // Auto complete and auto delete.
+/*            // Auto complete and auto delete.
             if (Hook.IsKeyDown(Keys.Back)) DelWithBackspace();
-            else CompletePairs();
+            else CompletePairs();*/
+
+            if (!busy)
+            {
+                busy = true;
+                // Auto complete and auto delete.
+                if (Hook.IsKeyDown(Keys.Back)) DelWithBackspace();
+                else CompletePairs();
+                busy = false;
+            }
         }
 
         private void DelWithBackspace()
@@ -48,7 +58,7 @@ namespace AutoComplete
 
         private void CompletePairs()
         {
-            if (Hook.IsKeyDown(Keys.ShiftKey))
+            if (Hook.IsKeyDown(Keys.ShiftKey) || !Hook.IsKeyDown(Keys.Back) || !Hook.IsKeyDown(Keys.Delete))
             {
                 // (
                 if (Hook.IsKeyDown(Keys.D9)) InsertText(")");
