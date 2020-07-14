@@ -8,13 +8,14 @@ namespace AutoComplete
     /// </summary>
     public delegate int HookProc(int nCode, int wParam, IntPtr lParam);
 
-    public delegate void ProcessAction(Keys keyData);
+    //public delegate void ProcessAction(Keys keyData);
+    public delegate void ProcessAction();
 
     public class Hook
     {
         #region 私有变量
 
-        internal ProcessAction processAction = (k) => { };
+        internal ProcessAction processAction = () => { };
 
         private bool enabled = true;
 
@@ -38,15 +39,17 @@ namespace AutoComplete
         {
             if (nCode == (int)HC_CODE.HC_ACTION)
             {
-                Keys keyData = (Keys)wParam;
-                if (IsKeyDown(Keys.ShiftKey) && IsKeyDown(Keys.ControlKey) && IsKeyDown(Keys.Menu)
+                //Keys keyData = (Keys)wParam;
+                processAction();
+
+                /* if (IsKeyDown(Keys.ShiftKey) && IsKeyDown(Keys.ControlKey) && IsKeyDown(Keys.Menu)
                     && IsKeyDown(keyData) && IsKeyDown(Keys.O))
                 {
                     enabled = !enabled;
                 }
 
                 if (enabled)
-                    processAction(keyData);
+                    processAction(keyData);*/
             }
 
             return Win32API.CallNextHookEx(mKeyboardHook, nCode, wParam, lParam);
