@@ -7,12 +7,13 @@ namespace AutoComplete
 {
     public partial class ThisAddIn
     {
-        Hook hook;
-        bool busy = false;
+        private Hook hook;
+
         // "" means ".
-        readonly Regex canCompletePairs = new Regex(@"\.|,|;|:|\s|\)|\]|\}|\>|""");
+        private readonly Regex canCompletePairs = new Regex(@"\.|,|;|:|\s|\)|\]|\}|\>|""");
+
         // Pattern used when user presses Backspace.
-        readonly Regex canDelPairs = new Regex(@"<>|\[\]|\(\)|{}");
+        private readonly Regex canDelPairs = new Regex(@"<>|\[\]|\(\)|{}");
 
         private void ThisAddIn_Startup(object sender, EventArgs e)
         {
@@ -27,18 +28,9 @@ namespace AutoComplete
 
         private void AutoProcessPairs()
         {
-/*            // Auto complete and auto delete.
+            // Auto complete and auto delete.
             if (Hook.IsKeyDown(Keys.Back)) DelWithBackspace();
-            else CompletePairs();*/
-
-            if (!busy)
-            {
-                busy = true;
-                // Auto complete and auto delete.
-                if (Hook.IsKeyDown(Keys.Back)) DelWithBackspace();
-                else CompletePairs();
-                busy = false;
-            }
+            else if (!Hook.IsKeyDown(Keys.Delete)) CompletePairs();
         }
 
         private void DelWithBackspace()
@@ -46,19 +38,43 @@ namespace AutoComplete
             Selection currentSelection = Application.Selection;
             if (currentSelection.Type == WdSelectionType.wdSelectionIP)
             {
-                var pairs = Application.ActiveDocument
-                    .Range(currentSelection.Range.End - 1, currentSelection.Range.End + 1)
-                    .Text;
-                if (canDelPairs.IsMatch(pairs))
+#if DEBUG
+                try
                 {
-                    currentSelection.Range.Delete();
+                    var endPoint = currentSelection.Range.End;
+                    // If the selection is not on the place of first character,
+                    // continue smart delete procedure.
+                    if (endPoint >= 1)
+                    {
+                        var pairs = Application.ActiveDocument
+                            .Range(endPoint - 1, endPoint + 1)
+                            .Text;
+                        if (canDelPairs.IsMatch(pairs)) currentSelection.Range.Delete();
+                    }
                 }
+                catch (Exception e)
+                {
+                    MessageBox.Show(e.Message);
+                    throw;
+                }
+#else
+                    var endPoint = currentSelection.Range.End;
+                    // If the selection is not on the place of first character,
+                    // continue smart delete procedure.
+                    if (endPoint >= 1)
+                    {
+                        var pairs = Application.ActiveDocument
+                            .Range(endPoint - 1, endPoint + 1)
+                            .Text;
+                        if (canDelPairs.IsMatch(pairs)) currentSelection.Range.Delete();
+                    }
+#endif
             }
         }
 
         private void CompletePairs()
         {
-            if (Hook.IsKeyDown(Keys.ShiftKey) || !Hook.IsKeyDown(Keys.Back) || !Hook.IsKeyDown(Keys.Delete))
+            if (Hook.IsKeyDown(Keys.ShiftKey) && !Hook.IsKeyDown(Keys.Back) && !Hook.IsKeyDown(Keys.Delete))
             {
                 // (
                 if (Hook.IsKeyDown(Keys.D9)) InsertText(")");
