@@ -7,53 +7,88 @@ namespace AutoComplete
 {
     public partial class ThisAddIn
     {
-        Hook hook;
-        readonly Regex endCharjudge = new Regex(@"\.|,|;|:|\s|\)|\]|\}|\>|""");
+        private Hook hook;
+
+        // "" means ".
+        private readonly Regex canCompletePairs = new Regex(@"\.|,|;|:|\s|\)|\]|\}|\>|""");
+
+        // Pattern used when user presses Backspace.
+        private readonly Regex canDelPairs = new Regex(@"<>|\[\]|\(\)|{}");
 
         private void ThisAddIn_Startup(object sender, EventArgs e)
         {
             // Hook config.
             hook = new Hook
             {
-                processAction = AutoCompleteBracket
+                processAction = AutoProcessPairs
             };
 
             hook.InstallHook();
         }
 
-        private void AutoCompleteBracket(Keys keyData)
+        private void AutoProcessPairs()
         {
-            if (Hook.IsKeyDown(Keys.ShiftKey) && Hook.IsKeyDown(keyData))
-            {
-                switch (keyData)
-                {
-                    // ( 
-                    case Keys.D9:
-                        InsertText(")");
-                        break;
-                    // {
-                    case Keys.OemOpenBrackets:
-                        InsertText("}");
-                        break;
-                    // "
-                    case Keys.OemQuotes:
-                        InsertText("\"");
-                        break;
-                    // <
-                    case Keys.Oemcomma:
-                        InsertText(">");
-                        break;
-                    default:
-                        break;
-                }
-            }
-            else if (Hook.IsKeyDown(keyData))
-            {
-                /*// '
-                if (keyData == Keys.OemQuotes) InsertText("'");*/
+            // Auto complete and auto delete.
+            if (Hook.IsKeyDown(Keys.Back)) DelWithBackspace();
+            else if (!Hook.IsKeyDown(Keys.Delete)) CompletePairs();
+        }
 
+        private void DelWithBackspace()
+        {
+            Selection currentSelection = Application.Selection;
+            if (currentSelection.Type == WdSelectionType.wdSelectionIP)
+            {
+#if DEBUG
+                try
+                {
+                    var endPoint = currentSelection.Range.End;
+                    // If the selection is not on the place of first character,
+                    // continue smart delete procedure.
+                    if (endPoint >= 1)
+                    {
+                        var pairs = Application.ActiveDocument
+                            .Range(endPoint - 1, endPoint + 1)
+                            .Text;
+                        if (canDelPairs.IsMatch(pairs)) currentSelection.Range.Delete();
+                    }
+                }
+                catch (Exception e)
+                {
+                    MessageBox.Show(e.Message);
+                    throw;
+                }
+#else
+                    var endPoint = currentSelection.Range.End;
+                    // If the selection is not on the place of first character,
+                    // continue smart delete procedure.
+                    if (endPoint >= 1)
+                    {
+                        var pairs = Application.ActiveDocument
+                            .Range(endPoint - 1, endPoint + 1)
+                            .Text;
+                        if (canDelPairs.IsMatch(pairs)) currentSelection.Range.Delete();
+                    }
+#endif
+            }
+        }
+
+        private void CompletePairs()
+        {
+            if (Hook.IsKeyDown(Keys.ShiftKey) && !Hook.IsKeyDown(Keys.Back) && !Hook.IsKeyDown(Keys.Delete))
+            {
+                // (
+                if (Hook.IsKeyDown(Keys.D9)) InsertText(")");
+                // {
+                else if (Hook.IsKeyDown(Keys.OemOpenBrackets)) InsertText("}");
+                // "
+                else if (Hook.IsKeyDown(Keys.OemQuotes)) InsertText("\"");
+                // <
+                else if (Hook.IsKeyDown(Keys.Oemcomma)) InsertText(">");
+            }
+            else
+            {
                 // [
-                if (keyData == Keys.OemOpenBrackets) InsertText("]");
+                if (Hook.IsKeyDown(Keys.OemOpenBrackets)) InsertText("]");
             }
         }
 
@@ -89,7 +124,7 @@ namespace AutoComplete
             var charAfter = Application.ActiveDocument
                 .Range(currentSelection.Range.End, currentSelection.Range.End + 1)
                 .Text;
-            return endCharjudge.IsMatch(charAfter) || charAfter.Length == 0;
+            return canCompletePairs.IsMatch(charAfter) || charAfter.Length == 0;
         }
 
         private void ThisAddIn_Shutdown(object sender, EventArgs e)
