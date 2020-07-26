@@ -179,8 +179,10 @@
     can be found.
   -->
   <ItemGroup>
+    <Compile Include="GetComposition.cs" />
+    <Compile Include="MessageHook.cs" />
     <Compile Include="Structs.cs" />
-    <Compile Include="Hook.cs" />
+    <Compile Include="KeyboardHook.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>

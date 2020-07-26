@@ -7,7 +7,8 @@ namespace AutoComplete
 {
     public partial class ThisAddIn
     {
-        private Hook hook;
+        private KeyboardHook hook;
+        private MessageHook messageHook;
 
         // "" means ".
         private readonly Regex canCompletePairs = new Regex(@"\.|,|;|:|\s|\)|\]|}|>|""|）|”|】|》");
@@ -17,78 +18,77 @@ namespace AutoComplete
 
         private void ThisAddIn_Startup(object sender, EventArgs e)
         {
-            // Hook config.
-            hook = new Hook
-            {
-                processAction = AutoProcessPairs
-            };
+            //// Hook config.
+            //hook = new KeyboardHook
+            //{
+            //    processAction = AutoProcessPairs
+            //};
 
-            hook.InstallHook();
+            //hook.InstallHook();
+            messageHook = new MessageHook();
+            messageHook.InstallHook();
         }
 
         private void AutoProcessPairs()
         {
             // Auto complete and auto delete.
-            if (Hook.IsKeyDown(Keys.Back)) DelWithBackspace();
-            else if (!Hook.IsKeyDown(Keys.Delete)) CompletePairs();
+            if (KeyboardHook.IsKeyDown(Keys.Back)) DelWithBackspace();
+            else if (!KeyboardHook.IsKeyDown(Keys.Delete)) CompletePairs();
+        }
+
+        /// <summary>
+        ///     The function will try to get text from a given range marked by params startFrom and endWith. 
+        ///     If the the selection is an insertion point(IP) and the range is valid, it will return true and 
+        ///     give the text in out param text. Otherwise, it will return false and text will be null.
+        /// </summary>
+        /// <param name="startFrom">The starting point using IP as reference.</param>
+        /// <param name="endWith">The ending point using IP as reference.</param>
+        /// <param name="text">The text wanted.</param>
+        /// <returns>Whether it successfully get the text.</returns>
+        private bool TryGetText(int startFrom, int endWith, out string text)
+        {
+            text = null;
+            var currentSelection = Application.Selection;
+
+            if (currentSelection.Type == WdSelectionType.wdSelectionIP)
+            {
+                var endPoint = currentSelection.Range.End;
+
+                text = Application.ActiveDocument
+                        .Range(Math.Max(endPoint + startFrom, 0), endPoint + endWith)
+                        .Text;
+
+                return true;
+            }
+
+            else return false;
         }
 
         private void DelWithBackspace()
         {
-            Selection currentSelection = Application.Selection;
-            if (currentSelection.Type == WdSelectionType.wdSelectionIP)
+            if (TryGetText(-1, 1, out string pairs) && canDelPairs.IsMatch(pairs))
             {
-#if DEBUG
-                try
-                {
-                    var endPoint = currentSelection.Range.End;
-                    // If the selection is not on the place of first character,
-                    // continue smart delete procedure.
-                    if (endPoint >= 1)
-                    {
-                        var pairs = Application.ActiveDocument
-                            .Range(endPoint - 1, endPoint + 1)
-                            .Text;
-                        if (canDelPairs.IsMatch(pairs)) currentSelection.Range.Delete();
-                    }
-                }
-                catch (Exception e)
-                {
-                    MessageBox.Show(e.Message);
-                    throw;
-                }
-#else
-                    var endPoint = currentSelection.Range.End;
-                    // If the selection is not on the place of first character,
-                    // continue smart delete procedure.
-                    if (endPoint >= 1)
-                    {
-                        var pairs = Application.ActiveDocument
-                            .Range(endPoint - 1, endPoint + 1)
-                            .Text;
-                        if (canDelPairs.IsMatch(pairs)) currentSelection.Range.Delete();
-                    }
-#endif
+                Application.Selection.Range.Delete();
             }
         }
 
         private void CompletePairs()
         {
-            if (Hook.IsKeyDown(Keys.ShiftKey) && !Hook.IsKeyDown(Keys.Back) && !Hook.IsKeyDown(Keys.Delete))
+            if (KeyboardHook.IsKeyDown(Keys.ShiftKey) && !KeyboardHook.IsKeyDown(Keys.Back) && !KeyboardHook.IsKeyDown(Keys.Delete))
             {
                 // (
-                if (Hook.IsKeyDown(Keys.D9)) InsertText(")");
+                if (KeyboardHook.IsKeyDown(Keys.D9)) InsertText(")");
                 // {
-                else if (Hook.IsKeyDown(Keys.OemOpenBrackets)) InsertText("}");
+                else if (KeyboardHook.IsKeyDown(Keys.OemOpenBrackets)) InsertText("}");
                 // "
-                else if (Hook.IsKeyDown(Keys.OemQuotes)) InsertText("\"");
+                else if (KeyboardHook.IsKeyDown(Keys.OemQuotes)) InsertText("\"");
                 // <
-                else if (Hook.IsKeyDown(Keys.Oemcomma)) InsertText(">");
+                else if (KeyboardHook.IsKeyDown(Keys.Oemcomma)) InsertText(">");
             }
             else
             {
                 // [
-                if (Hook.IsKeyDown(Keys.OemOpenBrackets)) InsertText("]");
+                if (KeyboardHook.IsKeyDown(Keys.OemOpenBrackets)) InsertText("]");
             }
         }
 
@@ -97,7 +97,7 @@ namespace AutoComplete
             Selection currentSelection = Application.Selection;
             // Test to see if selection is an insertion point(usually represented by a blinking vertical line).
             if (currentSelection.Type == WdSelectionType.wdSelectionIP
-                && NeedsComplete(ref currentSelection))
+                && NeedsComplete()) //NeedsComplete(currentSelection))
             {
                 currentSelection.Range.InsertAfter(anotherHalf);
             }
@@ -119,17 +119,20 @@ namespace AutoComplete
         /// It will check the character after selectionIP and decide whether to invoke AutoComplete.
         /// </summary>
         /// <param name="currentSelection"></param>
-        private bool NeedsComplete(ref Selection currentSelection)
+        private bool NeedsComplete() //Selection currentSelection)
         {
-            var charAfter = Application.ActiveDocument
-                .Range(currentSelection.Range.End, currentSelection.Range.End + 1)
-                .Text;
+            //var charAfter = Application.ActiveDocument
+            //    .Range(currentSelection.Range.End, currentSelection.Range.End + 1)
+            //    .Text;
+
+            TryGetText(0, 1, out string charAfter);
             return canCompletePairs.IsMatch(charAfter) || charAfter.Length == 0;
         }
 
         private void ThisAddIn_Shutdown(object sender, EventArgs e)
         {
-            hook.UnInstallHook();
+            //hook.UnInstallHook();
+            messageHook.UnInstallHook();
         }
 
         #region VSTO 生成的代码

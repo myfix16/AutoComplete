@@ -46,7 +46,7 @@ namespace AutoComplete
         public static extern int GetKeyState(int keyCode);
 
         #region unused api
-        /* /// <summary>
+        /// <summary>
         /// Get the handle of module.
         /// </summary>
         /// <param name="lpModuleName"></param>
@@ -67,7 +67,7 @@ namespace AutoComplete
         /// <param name="pbKeyState"></param>
         /// <returns>0 if it fails, non-zero integer otherwise.</returns>
         [DllImport("user32.dll")]
-        public static extern int GetKeyboardState(byte[] pbKeyState);*/
+        public static extern int GetKeyboardState(byte[] pbKeyState);
         #endregion
 
         #endregion

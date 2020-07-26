@@ -8,7 +8,7 @@ namespace AutoComplete
     /// </summary>
     public delegate int HookProc(int nCode, int wParam, IntPtr lParam);
 
-    public class Hook
+    public class KeyboardHook
     {
         /// <summary>
         /// The method triggered when some key is pressed.
