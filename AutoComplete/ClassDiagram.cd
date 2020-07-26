@@ -1,0 +1,91 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="AutoComplete.Hook" Collapsed="true">
+    <Position X="2.25" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAABAAAAAQAAAAAAAAAAAAAAAAAAAACACAEAQAAAAAE=</HashCode>
+      <FileName>Hook.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AutoComplete.ThisAddIn" Collapsed="true">
+    <Position X="2.25" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>QAAwAASQSRAAEQAgAwEAwFgIAAAAABARAAgAIAAACCg=</HashCode>
+      <FileName>ThisAddIn.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AutoComplete.Globals" Collapsed="true">
+    <Position X="0.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>EAgAgAAAAAAAAAAAIAAAAAAAAAAAAAAAAAACAAAAgAA=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AutoComplete.ThisRibbonCollection" Collapsed="true">
+    <Position X="4" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AutoComplete.Win32API" Collapsed="true">
+    <Position X="0.5" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>gEAAAAAAAAAAAAAAAAAADAAAAAAAAAAAAAAAAAAgAAA=</HashCode>
+      <FileName>Win32API.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AutoComplete.Properties.Resources" Collapsed="true">
+    <Position X="4" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAABEAAAAQAAAAAAAAAAAAAAAIA=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AutoComplete.Properties.Settings" Collapsed="true">
+    <Position X="0.5" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAIAAAAAABAAAAAAAAAAAAAAA=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Struct Name="AutoComplete.KeyboardHookStruct" Collapsed="true">
+    <Position X="0.5" Y="3.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAEBAAAAAAAAABAAAAAAAAAAAAAAAAQAAAAAAAAAQA=</HashCode>
+      <FileName>Structs.cs</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Enum Name="AutoComplete.WH_CODE" Collapsed="true">
+    <Position X="4" Y="5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>BIAAgAAABAAABAAABAAAAAAAAQAAAAAQAAUAABAIgAQ=</HashCode>
+      <FileName>Structs.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="AutoComplete.WM_KEYBOARD" Collapsed="true">
+    <Position X="0.5" Y="5.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACCAAAgAAACA=</HashCode>
+      <FileName>Structs.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="AutoComplete.HC_CODE" Collapsed="true">
+    <Position X="0.5" Y="5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAQAAAgCAAAAAAAAAAAAAAAIAAQAEAAABAAAA=</HashCode>
+      <FileName>Structs.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="AutoComplete.VK_CODE" Collapsed="true">
+    <Position X="2.25" Y="5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAgAAAAAgAAAIAAAAgAACAABCAQIAAAiIQwI=</HashCode>
+      <FileName>Structs.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Delegate Name="AutoComplete.HookProc" Collapsed="true">
+    <Position X="0.5" Y="6.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAECAAAAAAAAAA=</HashCode>
+      <FileName>Hook.cs</FileName>
+    </TypeIdentifier>
+  </Delegate>
+  <Font Name="Microsoft YaHei UI" Size="9" />
+</ClassDiagram>

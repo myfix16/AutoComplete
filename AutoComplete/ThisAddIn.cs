@@ -10,10 +10,10 @@ namespace AutoComplete
         private Hook hook;
 
         // "" means ".
-        private readonly Regex canCompletePairs = new Regex(@"\.|,|;|:|\s|\)|\]|\}|\>|""");
+        private readonly Regex canCompletePairs = new Regex(@"\.|,|;|:|\s|\)|\]|}|>|""|）|”|】|》");
 
         // Pattern used when user presses Backspace.
-        private readonly Regex canDelPairs = new Regex(@"<>|\[\]|\(\)|{}");
+        private readonly Regex canDelPairs = new Regex(@"<>|\[\]|\(\)|{}|（）|【】|《》|“”");
 
         private void ThisAddIn_Startup(object sender, EventArgs e)
         {
