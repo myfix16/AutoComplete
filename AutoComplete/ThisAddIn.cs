@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using Microsoft.Office.Interop.Word;
@@ -7,8 +8,7 @@ namespace AutoComplete
 {
     public partial class ThisAddIn
     {
-        private KeyboardHook hook;
-        private MessageHook messageHook;
+        private KeyboardHook keyboardHook;
 
         // "" means ".
         private readonly Regex canCompletePairs = new Regex(@"\.|,|;|:|\s|\)|\]|}|>|""|）|”|】|》");
@@ -16,18 +16,34 @@ namespace AutoComplete
         // Pattern used when user presses Backspace.
         private readonly Regex canDelPairs = new Regex(@"<>|\[\]|\(\)|{}|（）|【】|《》|“”");
 
+        private readonly List<string> languageIMEInfo = new List<string> { "zh-CN", "zh-TW" };
+
+        private readonly Dictionary<string, string> ChineseChar = new Dictionary<string, string>
+        {
+            [")"] = "）",
+            ["]"] = "】",
+            ["}"] = "}",
+            [">"] = "》",
+            ["\""] = "”",
+        };
+
         private void ThisAddIn_Startup(object sender, EventArgs e)
         {
-            //// Hook config.
-            //hook = new KeyboardHook
-            //{
-            //    processAction = AutoProcessPairs
-            //};
+            // Hook config.
+            keyboardHook = new KeyboardHook
+            {
+                processAction = AutoProcessPairs
+            };
 
-            //hook.InstallHook();
-            messageHook = new MessageHook();
-            messageHook.InstallHook();
+            keyboardHook.InstallHook();
         }
+
+        /// <summary>
+        /// The function will look for current input language and see whether it's Chinese.
+        /// If so, it will return true. Otherwise, it will return false.
+        /// </summary>
+        private bool GetCultureType()
+            => languageIMEInfo.Contains(InputLanguage.CurrentInputLanguage.Culture.Name);
 
         private void AutoProcessPairs()
         {
@@ -99,7 +115,7 @@ namespace AutoComplete
             if (currentSelection.Type == WdSelectionType.wdSelectionIP
                 && NeedsComplete()) //NeedsComplete(currentSelection))
             {
-                currentSelection.Range.InsertAfter(anotherHalf);
+                currentSelection.Range.InsertAfter(GetCultureType() ? ChineseChar[anotherHalf] : anotherHalf);
             }
             #region Selection Normal
             //else if (currentSelection.Type == Word.WdSelectionType.wdSelectionNormal)
@@ -131,8 +147,8 @@ namespace AutoComplete
 
         private void ThisAddIn_Shutdown(object sender, EventArgs e)
         {
-            //hook.UnInstallHook();
-            messageHook.UnInstallHook();
+            keyboardHook.UnInstallHook();
+            //messageHook.UnInstallHook();
         }
 
         #region VSTO 生成的代码

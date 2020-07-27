@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace AutoComplete
 {
     public class Win32API
     {
+        public delegate bool CallBack(IntPtr hwnd, int lParam);
+
         #region Import windows API
 
         /// <summary>
@@ -45,7 +48,6 @@ namespace AutoComplete
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         public static extern int GetKeyState(int keyCode);
 
-        #region unused api
         /// <summary>
         /// Get the handle of module.
         /// </summary>
@@ -62,13 +64,22 @@ namespace AutoComplete
         public static extern int GetWindowThreadProcessId(IntPtr hwnd, out int ID);
 
         /// <summary>
-        /// Copies the status of the 256 virtual keys to the specified buffer.
+        /// 获取窗体的句柄函数
         /// </summary>
-        /// <param name="pbKeyState"></param>
-        /// <returns>0 if it fails, non-zero integer otherwise.</returns>
+        /// <param name="lpClassName">窗口类名</param>
+        /// <param name="lpWindowName">窗口标题名</param>
+        /// <returns>返回句柄</returns>
+        [DllImport("user32.dll", EntryPoint = "FindWindow", SetLastError = true)]
+        public static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
+
+        [DllImport("user32.dll", EntryPoint = "FindWindowEx", SetLastError = true)]
+        public static extern IntPtr FindWindowEx(IntPtr hwndParent, uint hwndChildAfter, string lpszClass, string lpszWindow);
+
         [DllImport("user32.dll")]
-        public static extern int GetKeyboardState(byte[] pbKeyState);
-        #endregion
+        public static extern int EnumChildWindows(IntPtr hWndParent, CallBack lpfn, int lParam);
+
+        [DllImport("user32.dll")]
+        public static extern int GetWindowText(IntPtr hwnd, StringBuilder sb, int length);
 
         #endregion
     }

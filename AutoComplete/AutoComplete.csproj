@@ -179,6 +179,7 @@
     can be found.
   -->
   <ItemGroup>
+    <Compile Include="ExtendMethods.cs" />
     <Compile Include="GetComposition.cs" />
     <Compile Include="MessageHook.cs" />
     <Compile Include="Structs.cs" />
