@@ -15,7 +15,7 @@ namespace AutoComplete
         /// </summary>
         internal Action processAction = () => { };
 
-        //private bool enabled = true;
+        internal bool enabled = true;
 
         /// <summary>
         /// Keyboard hook handle.
@@ -49,17 +49,7 @@ namespace AutoComplete
         {
             if (nCode == (int)HC_CODE.HC_ACTION)
             {
-                processAction();
-                #region enable or disable
-                /* if (IsKeyDown(Keys.ShiftKey) && IsKeyDown(Keys.ControlKey) && IsKeyDown(Keys.Menu)
-                    && IsKeyDown(keyData) && IsKeyDown(Keys.O))
-                {
-                    enabled = !enabled;
-                }
-
-                if (enabled)
-                    processAction(keyData);*/
-                # endregion
+                if (enabled) processAction();
             }
 
             return Win32API.CallNextHookEx(mKeyboardHook, nCode, wParam, lParam);

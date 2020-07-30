@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace AutoComplete
 {
-    #region 定义结构
+    #region Message
 
     public enum WH_CODE : int
     {
@@ -167,8 +167,17 @@ namespace AutoComplete
     [StructLayout(LayoutKind.Sequential)]
     public struct POINT
     {
-        int x;
-        int y;
+        int x, y;
+    }
+
+    #endregion
+
+    #region IME Status
+
+    public enum IMEConversionMode
+    {
+        IME_CMODE_FULLSHAPE = 0x8,
+        IME_CHOTKEY_SHAPE_TOGGLE = 0x11,
     }
 
     #endregion

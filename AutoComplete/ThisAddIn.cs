@@ -3,11 +3,14 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using Microsoft.Office.Interop.Word;
+using static AutoComplete.Win32API;
 
 namespace AutoComplete
 {
     public partial class ThisAddIn
     {
+        private Document activeDocument;
+
         private KeyboardHook keyboardHook;
 
         // "" means ".
@@ -18,7 +21,8 @@ namespace AutoComplete
 
         private readonly List<string> languageIMEInfo = new List<string> { "zh-CN", "zh-TW" };
 
-        private readonly Dictionary<string, string> ChineseChar = new Dictionary<string, string>
+        // Mapping of half shape char to full shape char.
+        private readonly Dictionary<string, string> FullShapeChar = new Dictionary<string, string>
         {
             [")"] = "）",
             ["]"] = "】",
@@ -34,8 +38,28 @@ namespace AutoComplete
             {
                 processAction = AutoProcessPairs
             };
-
+            
             keyboardHook.InstallHook();
+
+            // Subscribe DocumentChange event to update active document in time.
+            Application.DocumentChange += OnWindowActivated;
+        }
+
+        /// <summary>
+        /// When active window is changed, update active document and enable/diable auto complete.
+        /// </summary>
+        private void OnWindowActivated()
+        {
+            try
+            {
+                activeDocument = Application.ActiveDocument;
+                keyboardHook.enabled = true;
+            }
+            catch (System.Runtime.InteropServices.COMException)
+            {
+                activeDocument = null;
+                keyboardHook.enabled = false;
+            }
         }
 
         /// <summary>
@@ -45,6 +69,20 @@ namespace AutoComplete
         private bool GetCultureType()
             => languageIMEInfo.Contains(InputLanguage.CurrentInputLanguage.Culture.Name);
 
+        /// <summary>
+        /// Retrieve the handle of active document.
+        /// </summary>
+        /// <param name="docName">The name of active document.</param>
+        /// <returns>The handle of active document.</returns>
+        private IntPtr GetHandle(string docName)
+            => FindWindow(null, docName + " - Word")
+                .FindWindowEx(0, "_WwF", null)
+                .FindWindowEx(0, "_WwF", null)
+                .FindWindowEx(0, "_WwF", null);
+
+        /// <summary>
+        /// The process method of key press event.
+        /// </summary>
         private void AutoProcessPairs()
         {
             // Auto complete and auto delete.
@@ -66,11 +104,13 @@ namespace AutoComplete
             text = null;
             var currentSelection = Application.Selection;
 
-            if (currentSelection.Type == WdSelectionType.wdSelectionIP)
+            if (activeDocument == null) return false;
+
+            else if (currentSelection.Type == WdSelectionType.wdSelectionIP)
             {
                 var endPoint = currentSelection.Range.End;
 
-                text = Application.ActiveDocument
+                text = activeDocument
                         .Range(Math.Max(endPoint + startFrom, 0), endPoint + endWith)
                         .Text;
 
@@ -80,6 +120,9 @@ namespace AutoComplete
             else return false;
         }
 
+        /// <summary>
+        /// Delete a pair of bracket if possible.
+        /// </summary>
         private void DelWithBackspace()
         {
             if (TryGetText(-1, 1, out string pairs) && canDelPairs.IsMatch(pairs))
@@ -88,9 +131,14 @@ namespace AutoComplete
             }
         }
 
+        /// <summary>
+        /// Complete a pair of bracket if necessary.
+        /// </summary>
         private void CompletePairs()
         {
-            if (KeyboardHook.IsKeyDown(Keys.ShiftKey) && !KeyboardHook.IsKeyDown(Keys.Back) && !KeyboardHook.IsKeyDown(Keys.Delete))
+            // TODO: Retrive key press message intercepted by IME.
+            if (KeyboardHook.IsKeyDown(Keys.ShiftKey) 
+                && !KeyboardHook.IsKeyDown(Keys.Back) && !KeyboardHook.IsKeyDown(Keys.Delete))
             {
                 // (
                 if (KeyboardHook.IsKeyDown(Keys.D9)) InsertText(")");
@@ -111,11 +159,14 @@ namespace AutoComplete
         private void InsertText(string anotherHalf)
         {
             Selection currentSelection = Application.Selection;
+
             // Test to see if selection is an insertion point(usually represented by a blinking vertical line).
             if (currentSelection.Type == WdSelectionType.wdSelectionIP
-                && NeedsComplete()) //NeedsComplete(currentSelection))
+                && NeedsComplete())
             {
-                currentSelection.Range.InsertAfter(GetCultureType() ? ChineseChar[anotherHalf] : anotherHalf);
+                bool isFullShape = GetCultureType()
+                                   && ConversionStatusChecker.IsFullShape(GetHandle(activeDocument.Name));
+                currentSelection.Range.InsertAfter(isFullShape ? FullShapeChar[anotherHalf] : anotherHalf);
             }
             #region Selection Normal
             //else if (currentSelection.Type == Word.WdSelectionType.wdSelectionNormal)
@@ -135,12 +186,8 @@ namespace AutoComplete
         /// It will check the character after selectionIP and decide whether to invoke AutoComplete.
         /// </summary>
         /// <param name="currentSelection"></param>
-        private bool NeedsComplete() //Selection currentSelection)
+        private bool NeedsComplete()
         {
-            //var charAfter = Application.ActiveDocument
-            //    .Range(currentSelection.Range.End, currentSelection.Range.End + 1)
-            //    .Text;
-
             TryGetText(0, 1, out string charAfter);
             return canCompletePairs.IsMatch(charAfter) || charAfter.Length == 0;
         }

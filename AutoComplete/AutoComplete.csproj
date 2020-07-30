@@ -179,10 +179,10 @@
     can be found.
   -->
   <ItemGroup>
+    <Compile Include="ConversionStatusChecker.cs" />
     <Compile Include="ExtendMethods.cs" />
-    <Compile Include="GetComposition.cs" />
     <Compile Include="MessageHook.cs" />
-    <Compile Include="Structs.cs" />
+    <Compile Include="StructsAndEnums.cs" />
     <Compile Include="KeyboardHook.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
@@ -198,7 +198,6 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <None Include="AutoComplete_TemporaryKey.pfx" />
-    <None Include="ClassDiagram.cd" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

@@ -8,7 +8,7 @@ namespace AutoComplete
     {
         public delegate bool CallBack(IntPtr hwnd, int lParam);
 
-        #region Import windows API
+        #region Hook API
 
         /// <summary>
         /// Install hook.
@@ -63,6 +63,8 @@ namespace AutoComplete
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         public static extern int GetWindowThreadProcessId(IntPtr hwnd, out int ID);
 
+        #endregion
+
         /// <summary>
         /// 获取窗体的句柄函数
         /// </summary>
@@ -80,6 +82,33 @@ namespace AutoComplete
 
         [DllImport("user32.dll")]
         public static extern int GetWindowText(IntPtr hwnd, StringBuilder sb, int length);
+
+        #region IME API
+
+        [DllImport("imm32.dll")]
+        public static extern IntPtr ImmGetContext(IntPtr hwnd);
+        [DllImport("imm32.dll")]
+        public static extern bool ImmGetOpenStatus(IntPtr himc);
+        [DllImport("imm32.dll")]
+        public static extern bool ImmSetOpenStatus(IntPtr himc, bool b);
+
+        /// <summary>
+        /// Retrieves the current conversion status.
+        /// </summary>
+        /// <param name="himc">Handle to the input context for which to retrieve status information.</param>
+        /// <param name="lpdw">
+        ///     Pointer to a variable in which the function retrieves a combination of conversion mode values. 
+        ///     For more information, see IME Conversion Mode Values.
+        /// </param>
+        /// <param name="lpdw2">
+        ///     Pointer to a variable in which the function retrieves a sentence mode value. 
+        ///     For more information, see IME Sentence Mode Values.
+        /// </param>
+        /// <returns>A nonzero value if successful, or 0 otherwise.</returns>
+        [DllImport("imm32.dll")]
+        public static extern bool ImmGetConversionStatus(IntPtr himc, ref int lpdw, ref int lpdw2);
+        [DllImport("imm32.dll")]
+        public static extern int ImmSimulateHotKey(IntPtr hwnd, int lngHotkey);
 
         #endregion
     }
