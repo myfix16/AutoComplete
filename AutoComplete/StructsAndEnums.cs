@@ -5,6 +5,9 @@ namespace AutoComplete
 {
     #region Message
 
+    /// <summary>
+    /// Windows hook id
+    /// </summary>
     public enum WH_CODE : int
     {
         WH_JOURNALRECORD = 0,
@@ -96,13 +99,16 @@ namespace AutoComplete
         HC_SYSMODALOFF = 5
     }
 
+    /// <summary>
+    /// Virtual key code.
+    /// </summary>
     public enum VK_CODE : int
     {
         VK_LBUTTON = 0x01,
         VK_RBUTTON = 0x02,
         VK_SHIFT = 0x10,
         VK_CONTROL = 0x11,
-        VK_MENU = 0x12,//ALT
+        VK_MENU = 0x12, //ALT
         VK_C = 0x43,
         VK_V = 0x56,
         VK_X = 0x58,
@@ -114,7 +120,8 @@ namespace AutoComplete
         VK_LCONTROL = 0xA2,
         VK_RCONTROL = 0xA3,
         VK_LMENU = 0xA4,
-        VK_RMENU = 0xA5
+        VK_RMENU = 0xA5,
+        VK_PROCESSKEY = 0xE5,
     }
 
     /// <summary>
@@ -155,11 +162,33 @@ namespace AutoComplete
     [StructLayout(LayoutKind.Sequential)]
     public struct MSG
     {
+        /// <summary>
+        /// A handle to the window whose window procedure receives the message. 
+        /// This member is null when the message is a thread message.
+        /// </summary>
         public IntPtr hwnd;
+        /// <summary>
+        /// The message identifier. Applications can only use the low word; 
+        /// the high word is reserved by the system.
+        /// </summary>
         public uint message;
+        /// <summary>
+        /// Additional information about the message. 
+        /// The exact meaning depends on the value of the message member.
+        /// </summary>
         public int wParam;
+        /// <summary>
+        /// Additional information about the message. 
+        /// The exact meaning depends on the value of the message member.
+        /// </summary>
         public IntPtr lParam;
+        /// <summary>
+        /// The time at which the message was posted.
+        /// </summary>
         public uint time;
+        /// <summary>
+        /// The cursor position, in screen coordinates, when the message was posted.
+        /// </summary>
         public POINT pt;
         public uint lPrivate;
     }
@@ -178,6 +207,12 @@ namespace AutoComplete
     {
         IME_CMODE_FULLSHAPE = 0x8,
         IME_CHOTKEY_SHAPE_TOGGLE = 0x11,
+    }
+
+    public enum IMECompositionValue
+    {
+        GCS_RESULTSTR = 0x0800,
+        GCS_COMPSTR = 0x0008,
     }
 
     #endregion

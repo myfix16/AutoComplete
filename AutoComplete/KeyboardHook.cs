@@ -47,9 +47,9 @@ namespace AutoComplete
         /// </param>
         private int KeyboardHookProc(int nCode, int wParam, IntPtr lParam)
         {
-            if (nCode == (int)HC_CODE.HC_ACTION)
+            if (nCode == (int)HC_CODE.HC_ACTION && enabled)
             {
-                if (enabled) processAction();
+                processAction();
             }
 
             return Win32API.CallNextHookEx(mKeyboardHook, nCode, wParam, lParam);
@@ -64,7 +64,7 @@ namespace AutoComplete
             if (mKeyboardHook == IntPtr.Zero)
             {
                 mKeyboardHookProcedure = new HookProc(KeyboardHookProc);
-                mKeyboardHook = Win32API.SetWindowsHookEx(WH_CODE.WH_KEYBOARD, mKeyboardHookProcedure, IntPtr.Zero,
+                mKeyboardHook = Win32API.SetWindowsHookEx((int)WH_CODE.WH_KEYBOARD, mKeyboardHookProcedure, IntPtr.Zero,
                                                           Win32API.GetCurrentThreadId());
             }
 

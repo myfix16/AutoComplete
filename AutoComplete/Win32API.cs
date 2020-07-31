@@ -11,11 +11,37 @@ namespace AutoComplete
         #region Hook API
 
         /// <summary>
-        /// Install hook.
+        /// Installs an application-defined hook procedure into a hook chain. 
+        /// You would install a hook procedure to monitor the system for certain types of events. 
+        /// These events are associated either with a specific thread or with all threads 
+        /// in the same desktop as the calling thread.
         /// </summary>
-        /// <returns>The handle of this hook.</returns>
+        /// <param name="idHook">
+        ///     The type of hook procedure to be installed. It's one value of enum WH_CODE.
+        /// </param>
+        /// <param name="lpfn">
+        ///     A pointer to the hook procedure. If the dwThreadId parameter is zero 
+        ///     or specifies the identifier of a thread created by a different process, 
+        ///     the lpfn parameter must point to a hook procedure in a DLL. 
+        ///     Otherwise, lpfn can point to a hook procedure in the code associated with the current process.
+        /// </param>
+        /// <param name="pInstance">
+        ///     A handle to the DLL containing the hook procedure pointed to by the lpfn parameter. 
+        ///     The hMod parameter must be set to NULL if the dwThreadId parameter specifies a thread 
+        ///     created by the current process and if the hook procedure is within the code 
+        ///     associated with the current process.
+        /// </param>
+        /// <param name="threadId">
+        ///     The identifier of the thread with which the hook procedure is to be associated. 
+        ///     For desktop apps, if this parameter is zero, the hook procedure is associated 
+        ///     with all existing threads running in the same desktop as the calling thread.
+        /// </param>
+        /// <returns>
+        ///     If the function succeeds, the return value is the handle to the hook procedure.
+        ///     If the function fails, the return value is NULL.
+        /// </returns>
         [DllImport("user32.dll", SetLastError = true, CallingConvention = CallingConvention.StdCall)]
-        public static extern IntPtr SetWindowsHookEx(WH_CODE idHook, HookProc lpfn, IntPtr pInstance, uint threadId);
+        public static extern IntPtr SetWindowsHookEx(int idHook, HookProc lpfn, IntPtr pInstance, uint threadId);
 
         /// <summary>
         /// Uninstall hook.
@@ -65,6 +91,7 @@ namespace AutoComplete
 
         #endregion
 
+        #region Get handle
         /// <summary>
         /// 获取窗体的句柄函数
         /// </summary>
@@ -83,12 +110,19 @@ namespace AutoComplete
         [DllImport("user32.dll")]
         public static extern int GetWindowText(IntPtr hwnd, StringBuilder sb, int length);
 
+        #endregion
+
         #region IME API
 
         [DllImport("imm32.dll")]
         public static extern IntPtr ImmGetContext(IntPtr hwnd);
+
+        [DllImport("Imm32.dll")]
+        public static extern bool ImmReleaseContext(IntPtr hWnd, IntPtr hIMC);
+
         [DllImport("imm32.dll")]
         public static extern bool ImmGetOpenStatus(IntPtr himc);
+
         [DllImport("imm32.dll")]
         public static extern bool ImmSetOpenStatus(IntPtr himc, bool b);
 
@@ -107,8 +141,30 @@ namespace AutoComplete
         /// <returns>A nonzero value if successful, or 0 otherwise.</returns>
         [DllImport("imm32.dll")]
         public static extern bool ImmGetConversionStatus(IntPtr himc, ref int lpdw, ref int lpdw2);
+
         [DllImport("imm32.dll")]
         public static extern int ImmSimulateHotKey(IntPtr hwnd, int lngHotkey);
+
+        [DllImport("imm32.dll")]
+        public static extern uint ImmGetVirtualKey(IntPtr hwnd);
+
+        [DllImport("Imm32.dll")]
+        public static extern IntPtr ImmAssociateContext(IntPtr hWnd, IntPtr hIMC);
+
+        [DllImport("imm32.dll", CharSet = CharSet.Auto)]
+        public static extern int ImmCreateContext();
+
+        [DllImport("imm32.dll", CharSet = CharSet.Auto)]
+        public static extern bool ImmDestroyContext(int hImc);
+
+        [DllImport("imm32.dll", CharSet = CharSet.Auto)]
+        public static extern IntPtr SetFocus(IntPtr hWnd);
+
+        [DllImport("Imm32.dll", CharSet = CharSet.Unicode)]
+        public static extern int ImmGetCompositionStringW(IntPtr hIMC, int dwIndex, byte[] lpBuf, int dwBufLen);
+
+        [DllImport("imm32.dll")]
+        public static extern int ImmGetCompositionString(IntPtr hIMC, int dwIndex, StringBuilder lPBuf, int dwBufLen);
 
         #endregion
     }

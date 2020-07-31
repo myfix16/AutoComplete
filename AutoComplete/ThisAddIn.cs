@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using Microsoft.Office.Interop.Word;
@@ -13,22 +14,23 @@ namespace AutoComplete
 
         private KeyboardHook keyboardHook;
 
+        private MessageHook messageHook;
+
         // "" means ".
-        private readonly Regex canCompletePairs = new Regex(@"\.|,|;|:|\s|\)|\]|}|>|""|）|”|】|》");
+        private readonly Regex canCompletePairs = new Regex(@"\.|,|;|:|\s|\)|\]|}|>|）|】|》");
 
         // Pattern used when user presses Backspace.
         private readonly Regex canDelPairs = new Regex(@"<>|\[\]|\(\)|{}|（）|【】|《》|“”");
 
-        private readonly List<string> languageIMEInfo = new List<string> { "zh-CN", "zh-TW" };
-
-        // Mapping of half shape char to full shape char.
-        private readonly Dictionary<string, string> FullShapeChar = new Dictionary<string, string>
+        private readonly Dictionary<string, string> insertMapping = new Dictionary<string, string>
         {
-            [")"] = "）",
-            ["]"] = "】",
-            ["}"] = "}",
-            [">"] = "》",
-            ["\""] = "”",
+            ["("] = ")",
+            ["["] = "]",
+            ["["] = "]",
+            ["<"] = ">",
+            ["（"] = "）",
+            ["【"] = "】",
+            ["《"] = "》",
         };
 
         private void ThisAddIn_Startup(object sender, EventArgs e)
@@ -36,13 +38,21 @@ namespace AutoComplete
             // Hook config.
             keyboardHook = new KeyboardHook
             {
-                processAction = AutoProcessPairs
+                processAction = DelWithBackspace
             };
-            
+
             keyboardHook.InstallHook();
+
+            messageHook = new MessageHook()
+            {
+                processAction = CompletePairs
+            };
+
+            messageHook.InstallHook();
 
             // Subscribe DocumentChange event to update active document in time.
             Application.DocumentChange += OnWindowActivated;
+
         }
 
         /// <summary>
@@ -54,20 +64,18 @@ namespace AutoComplete
             {
                 activeDocument = Application.ActiveDocument;
                 keyboardHook.enabled = true;
+                messageHook.enabled = true;
+
+                messageHook.handle = GetHandle(activeDocument.Name);
+                messageHook.hIMC = ImmGetContext(messageHook.handle);
             }
             catch (System.Runtime.InteropServices.COMException)
             {
                 activeDocument = null;
                 keyboardHook.enabled = false;
+                messageHook.enabled = false;
             }
         }
-
-        /// <summary>
-        /// The function will look for current input language and see whether it's Chinese.
-        /// If so, it will return true. Otherwise, it will return false.
-        /// </summary>
-        private bool GetCultureType()
-            => languageIMEInfo.Contains(InputLanguage.CurrentInputLanguage.Culture.Name);
 
         /// <summary>
         /// Retrieve the handle of active document.
@@ -79,16 +87,6 @@ namespace AutoComplete
                 .FindWindowEx(0, "_WwF", null)
                 .FindWindowEx(0, "_WwF", null)
                 .FindWindowEx(0, "_WwF", null);
-
-        /// <summary>
-        /// The process method of key press event.
-        /// </summary>
-        private void AutoProcessPairs()
-        {
-            // Auto complete and auto delete.
-            if (KeyboardHook.IsKeyDown(Keys.Back)) DelWithBackspace();
-            else if (!KeyboardHook.IsKeyDown(Keys.Delete)) CompletePairs();
-        }
 
         /// <summary>
         ///     The function will try to get text from a given range marked by params startFrom and endWith. 
@@ -125,34 +123,39 @@ namespace AutoComplete
         /// </summary>
         private void DelWithBackspace()
         {
-            if (TryGetText(-1, 1, out string pairs) && canDelPairs.IsMatch(pairs))
+            if (KeyboardHook.IsKeyDown(Keys.Back)
+                && TryGetText(-1, 1, out string pairs)
+                && canDelPairs.IsMatch(pairs))
             {
                 Application.Selection.Range.Delete();
             }
         }
 
+        private string GetChar(IntPtr lParam)
+        {
+            var pmsg = Marshal.PtrToStructure<MSG>(lParam);
+            if (pmsg.message == (int)WM_IMM.WM_IME_CHAR || pmsg.message == (int)WM_IMM.WM_CHAR)
+            {
+                MessageBox.Show(pmsg.wParam.ToString());
+                var list = new List<string> { "(", "[", "{" };
+                var character = ((char)pmsg.wParam).ToString();
+                if (list.Contains(character)) MessageBox.Show(character);
+                return ((char)pmsg.wParam).ToString();
+            }
+
+            return string.Empty;
+        }
+
         /// <summary>
         /// Complete a pair of bracket if necessary.
         /// </summary>
-        private void CompletePairs()
+        private void CompletePairs(IntPtr lParam)
         {
-            // TODO: Retrive key press message intercepted by IME.
-            if (KeyboardHook.IsKeyDown(Keys.ShiftKey) 
-                && !KeyboardHook.IsKeyDown(Keys.Back) && !KeyboardHook.IsKeyDown(Keys.Delete))
+            if (!KeyboardHook.IsKeyDown(Keys.Back) && !KeyboardHook.IsKeyDown(Keys.Delete))
             {
-                // (
-                if (KeyboardHook.IsKeyDown(Keys.D9)) InsertText(")");
-                // {
-                else if (KeyboardHook.IsKeyDown(Keys.OemOpenBrackets)) InsertText("}");
-                // "
-                else if (KeyboardHook.IsKeyDown(Keys.OemQuotes)) InsertText("\"");
-                // <
-                else if (KeyboardHook.IsKeyDown(Keys.Oemcomma)) InsertText(">");
-            }
-            else
-            {
-                // [
-                if (KeyboardHook.IsKeyDown(Keys.OemOpenBrackets)) InsertText("]");
+                // TODO: The method needs a in parameter.
+                bool isOneOfPairs = insertMapping.TryGetValue(GetChar(lParam), out string value);
+                if (isOneOfPairs) InsertText(value);
             }
         }
 
@@ -161,12 +164,9 @@ namespace AutoComplete
             Selection currentSelection = Application.Selection;
 
             // Test to see if selection is an insertion point(usually represented by a blinking vertical line).
-            if (currentSelection.Type == WdSelectionType.wdSelectionIP
-                && NeedsComplete())
+            if (currentSelection.Type == WdSelectionType.wdSelectionIP && NeedsComplete())
             {
-                bool isFullShape = GetCultureType()
-                                   && ConversionStatusChecker.IsFullShape(GetHandle(activeDocument.Name));
-                currentSelection.Range.InsertAfter(isFullShape ? FullShapeChar[anotherHalf] : anotherHalf);
+                currentSelection.Range.InsertAfter(anotherHalf);
             }
             #region Selection Normal
             //else if (currentSelection.Type == Word.WdSelectionType.wdSelectionNormal)
@@ -194,8 +194,8 @@ namespace AutoComplete
 
         private void ThisAddIn_Shutdown(object sender, EventArgs e)
         {
+            messageHook.UnInstallHook();
             keyboardHook.UnInstallHook();
-            //messageHook.UnInstallHook();
         }
 
         #region VSTO 生成的代码
