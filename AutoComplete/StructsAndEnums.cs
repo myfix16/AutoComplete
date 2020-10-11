@@ -44,24 +44,9 @@ namespace AutoComplete
 
     public enum WM_KEYBOARD : int
     {
-        /// <summary>
-        /// 非系统按键按下
-        /// </summary>
         WM_KEYDOWN = 0x100,
-
-        /// <summary>
-        /// 非系统按键释放
-        /// </summary>
         WM_KEYUP = 0x101,
-
-        /// <summary>
-        /// 系统按键按下
-        /// </summary>
         WM_SYSKEYDOWN = 0x104,
-
-        /// <summary>
-        /// 系统按键释放
-        /// </summary>
         WM_SYSKEYUP = 0x105
     }
 
@@ -71,7 +56,6 @@ namespace AutoComplete
     public enum WM_IMM : int
     {
         WM_INPUTLANGCHANGE = 0x51,
-        WM_KEYUP = 0x101,
         WM_CHAR = 0x102,
         WM_CONVERTREQUESTEX = 0x108,
         WM_IME_STARTCOMPOSITION = 0x10D,
@@ -125,9 +109,8 @@ namespace AutoComplete
     }
 
     /// <summary>
-    /// 键盘钩子事件结构定义
+    /// Keyboard hook message struct.
     /// </summary>
-    /// <remarks>详细说明请参考MSDN中关于 KBDLLHOOKSTRUCT 的说明</remarks>
     [StructLayout(LayoutKind.Sequential)]
     public struct KeyboardHookStruct
     {
@@ -176,7 +159,7 @@ namespace AutoComplete
         /// Additional information about the message. 
         /// The exact meaning depends on the value of the message member.
         /// </summary>
-        public int wParam;
+        public IntPtr wParam;
         /// <summary>
         /// Additional information about the message. 
         /// The exact meaning depends on the value of the message member.
@@ -203,13 +186,16 @@ namespace AutoComplete
 
     #region IME Status
 
-    public enum IMEConversionMode
+    public enum IMEConversionMode : int
     {
+        /// <summary>
+        /// Full shape
+        /// </summary>
         IME_CMODE_FULLSHAPE = 0x8,
         IME_CHOTKEY_SHAPE_TOGGLE = 0x11,
     }
 
-    public enum IMECompositionValue
+    public enum IMECompositionValue : int
     {
         GCS_RESULTSTR = 0x0800,
         GCS_COMPSTR = 0x0008,

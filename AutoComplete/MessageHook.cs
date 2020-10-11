@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Windows.Forms;
 using static AutoComplete.Win32API;
 
 namespace AutoComplete
@@ -21,19 +22,23 @@ namespace AutoComplete
         /// <summary>
         /// Instance of message hook delegate.
         /// </summary>
-        private HookProc messageHookProcedure;
+        private readonly HookProc messageHookProcedure;
 
         /// <summary>
         /// The method triggered when input is detected.
         /// </summary>
         internal Action<IntPtr> processAction = (lParam) => { };
 
-        public MessageHook() { }
+        public MessageHook() 
+        {
+            messageHookProcedure = new HookProc(MessageHookProc);
+        }
 
         public MessageHook(IntPtr handle)
         {
             this.handle = handle;
             hIMC = ImmGetContext(handle);
+            messageHookProcedure = new HookProc(MessageHookProc);
         }
 
         /// <summary>
@@ -42,12 +47,8 @@ namespace AutoComplete
         /// <returns>Whether hook is successfully installed.</returns>
         public bool InstallHook()
         {
-            if (messageHookHandle == IntPtr.Zero)
-            {
-                messageHookProcedure = new HookProc(MessageHookProc);
-                messageHookHandle = Win32API.SetWindowsHookEx((int)WH_CODE.WH_GETMESSAGE, messageHookProcedure,
-                                                              IntPtr.Zero, Win32API.GetCurrentThreadId());
-            }
+            messageHookHandle = SetWindowsHookEx((int)WH_CODE.WH_GETMESSAGE, messageHookProcedure,
+                                                 IntPtr.Zero, GetCurrentThreadId());
 
             return messageHookHandle != IntPtr.Zero;
         }
@@ -58,14 +59,14 @@ namespace AutoComplete
         /// <returns>Whether the hook is successfully uninstalled.</returns>
         public bool UnInstallHook() => UnhookWindowsHookEx(messageHookHandle);
 
-        private string GetInputContent(IntPtr lParam)
+        internal string GetInputContent(IntPtr lParam)
         {
             var m = Marshal.PtrToStructure<MSG>(lParam);
 
             if (m.message == (uint)WM_IMM.WM_IME_COMPOSITION)
             {
                 var res = m.wParam;
-                string text = CurrentCompStr(this.handle);
+                string text = CurrentCompStr(handle);
                 if (!string.IsNullOrEmpty(text))
                 {
                     return (text);

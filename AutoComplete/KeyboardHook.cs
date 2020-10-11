@@ -26,7 +26,7 @@ namespace AutoComplete
         /// Instance of keyboard hook delegate. It will be invoked when some key is pressed.
         /// </summary>
         private HookProc mKeyboardHookProcedure;
-
+        
         /// <summary>
         /// Judge whether a key is pressed.
         /// </summary>

@@ -27,6 +27,7 @@ namespace AutoComplete
             ["("] = ")",
             ["["] = "]",
             ["["] = "]",
+            ["{"] = "}",
             ["<"] = ">",
             ["（"] = "）",
             ["【"] = "】",
@@ -52,7 +53,6 @@ namespace AutoComplete
 
             // Subscribe DocumentChange event to update active document in time.
             Application.DocumentChange += OnWindowActivated;
-
         }
 
         /// <summary>
@@ -66,7 +66,8 @@ namespace AutoComplete
                 keyboardHook.enabled = true;
                 messageHook.enabled = true;
 
-                messageHook.handle = GetHandle(activeDocument.Name);
+                // ? messageHook.handle = GetHandle(activeDocument.Name);
+                messageHook.handle = (IntPtr)Application.ActiveWindow.Hwnd;
                 messageHook.hIMC = ImmGetContext(messageHook.handle);
             }
             catch (System.Runtime.InteropServices.COMException)
@@ -77,6 +78,7 @@ namespace AutoComplete
             }
         }
 
+        // ! useless.
         /// <summary>
         /// Retrieve the handle of active document.
         /// </summary>
@@ -134,13 +136,17 @@ namespace AutoComplete
         private string GetChar(IntPtr lParam)
         {
             var pmsg = Marshal.PtrToStructure<MSG>(lParam);
-            if (pmsg.message == (int)WM_IMM.WM_IME_CHAR || pmsg.message == (int)WM_IMM.WM_CHAR)
+            // TODO: WM_IME_CHAR seems have no use.
+            // ! It seems like when you press a key it will generate 2 WM with char information.
+            if (pmsg.message == (int)WM_IMM.WM_CHAR || pmsg.message == (int)WM_IMM.WM_IME_CHAR)
             {
-                MessageBox.Show(pmsg.wParam.ToString());
                 var list = new List<string> { "(", "[", "{" };
                 var character = ((char)pmsg.wParam).ToString();
-                if (list.Contains(character)) MessageBox.Show(character);
-                return ((char)pmsg.wParam).ToString();
+                //var character = (pmsg.wParam).ToString();
+                if (list.Contains(character))
+                    MessageBox.Show(character);
+
+                return character;
             }
 
             return string.Empty;
@@ -153,8 +159,10 @@ namespace AutoComplete
         {
             if (!KeyboardHook.IsKeyDown(Keys.Back) && !KeyboardHook.IsKeyDown(Keys.Delete))
             {
-                // TODO: The method needs a in parameter.
-                bool isOneOfPairs = insertMapping.TryGetValue(GetChar(lParam), out string value);
+                string input = messageHook.GetInputContent(lParam);
+                if (input!=string.Empty)
+                    MessageBox.Show(input);
+                bool isOneOfPairs = insertMapping.TryGetValue(input, out string value);
                 if (isOneOfPairs) InsertText(value);
             }
         }
