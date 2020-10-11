@@ -1,13 +1,20 @@
 ﻿using System;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
+using System.Windows.Input;
 using Microsoft.Office.Interop.Word;
 
 namespace AutoComplete
 {
     public partial class ThisAddIn
     {
-        private Hook hook;
+        private Document activeDocument;
+
+        private KeyboardHook keyboardHook;
+
+        private IntPtr docHandle;
+
+        private IntPtr hIMC;
 
         // "" means ".
         private readonly Regex canCompletePairs = new Regex(@"\.|,|;|:|\s|\)|\]|}|>|""|）|”|】|》");
@@ -18,19 +25,41 @@ namespace AutoComplete
         private void ThisAddIn_Startup(object sender, EventArgs e)
         {
             // Hook config.
-            hook = new Hook
+            keyboardHook = new KeyboardHook
             {
                 processAction = AutoProcessPairs
             };
 
-            hook.InstallHook();
+            keyboardHook.InstallHook();
+
+            // Subscribe DocumentChange event to update active document in time.
+            Application.DocumentChange += OnWindowActivated;
+        }
+
+        /// <summary>
+        /// When active window is changed, update active document and enable/disable auto complete.
+        /// </summary>
+        private void OnWindowActivated()
+        {
+            try
+            {
+                activeDocument = Application.ActiveDocument;
+                keyboardHook.enabled = true;
+                docHandle= (IntPtr)Application.ActiveWindow.Hwnd;
+                hIMC = Win32API.ImmGetContext(docHandle);
+            }
+            catch (System.Runtime.InteropServices.COMException)
+            {
+                activeDocument = null;
+                keyboardHook.enabled = false;
+            }
         }
 
         private void AutoProcessPairs()
         {
             // Auto complete and auto delete.
-            if (Hook.IsKeyDown(Keys.Back)) DelWithBackspace();
-            else if (!Hook.IsKeyDown(Keys.Delete)) CompletePairs();
+            if (KeyboardHook.IsKeyDown(Keys.Back)) DelWithBackspace();
+            else if (!KeyboardHook.IsKeyDown(Keys.Delete)) CompletePairs();
         }
 
         private void DelWithBackspace()
@@ -38,58 +67,58 @@ namespace AutoComplete
             Selection currentSelection = Application.Selection;
             if (currentSelection.Type == WdSelectionType.wdSelectionIP)
             {
-#if DEBUG
-                try
+                var endPoint = currentSelection.Range.End;
+                // If the selection is not on the place of first character,
+                // continue smart delete procedure.
+                if (endPoint >= 1)
                 {
-                    var endPoint = currentSelection.Range.End;
-                    // If the selection is not on the place of first character,
-                    // continue smart delete procedure.
-                    if (endPoint >= 1)
-                    {
-                        var pairs = Application.ActiveDocument
-                            .Range(endPoint - 1, endPoint + 1)
-                            .Text;
-                        if (canDelPairs.IsMatch(pairs)) currentSelection.Range.Delete();
-                    }
+                    var pairs = Application.ActiveDocument
+                        .Range(endPoint - 1, endPoint + 1)
+                        .Text;
+                    if (canDelPairs.IsMatch(pairs)) currentSelection.Range.Delete();
                 }
-                catch (Exception e)
-                {
-                    MessageBox.Show(e.Message);
-                    throw;
-                }
-#else
-                    var endPoint = currentSelection.Range.End;
-                    // If the selection is not on the place of first character,
-                    // continue smart delete procedure.
-                    if (endPoint >= 1)
-                    {
-                        var pairs = Application.ActiveDocument
-                            .Range(endPoint - 1, endPoint + 1)
-                            .Text;
-                        if (canDelPairs.IsMatch(pairs)) currentSelection.Range.Delete();
-                    }
-#endif
             }
         }
 
         private void CompletePairs()
         {
-            if (Hook.IsKeyDown(Keys.ShiftKey) && !Hook.IsKeyDown(Keys.Back) && !Hook.IsKeyDown(Keys.Delete))
+            if (KeyboardHook.IsKeyDown(Keys.ShiftKey)
+                && !KeyboardHook.IsKeyDown(Keys.Back)
+                && !KeyboardHook.IsKeyDown(Keys.Delete)
+                && IsInProperLanguageState())
             {
                 // (
-                if (Hook.IsKeyDown(Keys.D9)) InsertText(")");
+                if (KeyboardHook.IsKeyDown(Keys.D9)) InsertText(")");
                 // {
-                else if (Hook.IsKeyDown(Keys.OemOpenBrackets)) InsertText("}");
-                // "
-                else if (Hook.IsKeyDown(Keys.OemQuotes)) InsertText("\"");
+                else if (KeyboardHook.IsKeyDown(Keys.OemOpenBrackets)) InsertText("}");
                 // <
-                else if (Hook.IsKeyDown(Keys.Oemcomma)) InsertText(">");
+                else if (KeyboardHook.IsKeyDown(Keys.Oemcomma)) InsertText(">");
             }
             else
             {
                 // [
-                if (Hook.IsKeyDown(Keys.OemOpenBrackets)) InsertText("]");
+                if (KeyboardHook.IsKeyDown(Keys.OemOpenBrackets)) InsertText("]");
             }
+        }
+
+        private bool IsInProperLanguageState()
+        {
+            if (InputLanguage.CurrentInputLanguage.Culture.Parent.Name == "en")
+            {
+                return true;
+            }
+
+            int iMode = 0;
+            int iSentence = 0;
+            if (Win32API.ImmGetConversionStatus(hIMC, ref iMode, ref iSentence))
+            {
+                if (iMode == 0)
+                {
+                    return true;
+                }
+            }
+            
+            return false;
         }
 
         private void InsertText(string anotherHalf)
@@ -129,7 +158,7 @@ namespace AutoComplete
 
         private void ThisAddIn_Shutdown(object sender, EventArgs e)
         {
-            hook.UnInstallHook();
+            keyboardHook.UnInstallHook();
         }
 
         #region VSTO 生成的代码

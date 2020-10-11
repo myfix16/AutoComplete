@@ -45,30 +45,24 @@ namespace AutoComplete
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         public static extern int GetKeyState(int keyCode);
 
-        #region unused api
-        /* /// <summary>
-        /// Get the handle of module.
-        /// </summary>
-        /// <param name="lpModuleName"></param>
-        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        public static extern IntPtr GetModuleHandle(string lpModuleName);
+        [DllImport("imm32.dll")]
+        public static extern IntPtr ImmGetContext(IntPtr hwnd);
 
         /// <summary>
-        /// Get windows thread process id of a certain handle.
+        /// Retrieves the current conversion status.
         /// </summary>
-        /// <param name="hwnd"></param>
-        /// <param name="ID"></param>
-        [DllImport("user32.dll", CharSet = CharSet.Auto)]
-        public static extern int GetWindowThreadProcessId(IntPtr hwnd, out int ID);
-
-        /// <summary>
-        /// Copies the status of the 256 virtual keys to the specified buffer.
-        /// </summary>
-        /// <param name="pbKeyState"></param>
-        /// <returns>0 if it fails, non-zero integer otherwise.</returns>
-        [DllImport("user32.dll")]
-        public static extern int GetKeyboardState(byte[] pbKeyState);*/
-        #endregion
+        /// <param name="himc">Handle to the input context for which to retrieve status information.</param>
+        /// <param name="lpdw">
+        ///     Pointer to a variable in which the function retrieves a combination of conversion mode values. 
+        ///     For more information, see IME Conversion Mode Values.
+        /// </param>
+        /// <param name="lpdw2">
+        ///     Pointer to a variable in which the function retrieves a sentence mode value. 
+        ///     For more information, see IME Sentence Mode Values.
+        /// </param>
+        /// <returns>A nonzero value if successful, or 0 otherwise.</returns>
+        [DllImport("imm32.dll")]
+        public static extern bool ImmGetConversionStatus(IntPtr himc, ref int lpdw, ref int lpdw2);
 
         #endregion
     }
